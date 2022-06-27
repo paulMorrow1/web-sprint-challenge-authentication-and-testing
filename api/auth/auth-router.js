@@ -1,7 +1,35 @@
-const router = require('express').Router();
+const router = require("express").Router();
+const db = require("../../data/dbConfig");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
-router.post('/register', (req, res) => {
-  res.end('implement register, please!');
+const SALT = 4;
+
+const SECRET = "billybobthorton";
+
+router.post("/register", async (req, res) => {
+  const payload = req.body;
+  if (
+    payload.hasOwnProperty("username") &&
+    payload.hasOwnProperty("password")
+  ) {
+    // register user
+    try {
+      const hashedPassword = await bcrypt.hash(payload.password, SALT);
+      const [newlyCreatedUserId] = await db("users").insert({
+        username: payload.username,
+        password: hashedPassword,
+      });
+      const newUser = await db("users").where("id", newlyCreatedUserId).first();
+      res.json(newUser);
+    } catch (err) {
+      console.log("err: ", err);
+      res.status(400).send("username taken");
+    }
+  } else {
+    res.status(400).send("username and password required");
+  }
+
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -29,8 +57,43 @@ router.post('/register', (req, res) => {
   */
 });
 
-router.post('/login', (req, res) => {
-  res.end('implement login, please!');
+router.post("/login", async (req, res) => {
+  const payload = req.body;
+  if (
+    payload.hasOwnProperty("username") &&
+    payload.hasOwnProperty("password")
+  ) {
+    // get user by username
+    const user = await db("users").where("username", payload.username).first();
+    // user = { username: '' , password: '' };
+
+    if (user) {
+      // check if founds user hashed password match payload password
+      const match = await bcrypt.compare(payload.password, user.password);
+
+      // if a match is found, we have the correct user and their credentials
+      if (match) {
+        // create token
+        // resspond with a json payload with keys 'message' and 'token'
+        // 'message' value being "Welcome, {users username}"
+        const token = jwt.sign(
+          { id: user.id, username: user.username },
+          SECRET
+        );
+        console.log("token: ", token);
+        res.json({ message: `Welcome, ${user.username}`, token: token });
+      } else {
+        // if no match is found, we don't have the correct users credentials
+        res.status(400).send("invalid credentials");
+      }
+    } else {
+      // no user found
+      res.status(400).send("invalid credentials");
+    }
+  } else {
+    res.status(400).send("username and password required");
+  }
+
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
