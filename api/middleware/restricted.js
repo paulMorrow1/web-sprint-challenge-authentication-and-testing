@@ -23,10 +23,10 @@ module.exports = (req, res, next) => {
       console.log("decodedToken: ", decodedToken);
       next();
     } catch {
-      res.status(400).send("token invalid");
+      res.status(400).json({ message: "token invalid" });
     }
   } else {
     // response saying 'token required'
-    res.status(400).send("token required");
+    res.status(400).json({ message: "token required" });
   }
 };
