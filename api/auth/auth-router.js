@@ -13,11 +13,11 @@ router.post("/register", async (req, res, next) => {
   // register user
   try {
     if (!username || !password) {
-      res.status(400).send("username and password required");
+      res.status(400).json({ message: "username and password required" });
     } else if (username) {
       const usernameExists = await Users.findBy({ username }).first();
       if (usernameExists) {
-        return res.status(400).send("username taken");
+        return res.status(400).json({ message: "username taken" });
       }
       const hashedPassword = await bcrypt.hash(password, SALT);
       const [newlyCreatedUserId] = await db("users").insert({
@@ -93,6 +93,7 @@ router.post("/login", async (req, res) => {
     } else {
       // no user found
       res.status(400).send("invalid credentials");
+      //
     }
   }
 
