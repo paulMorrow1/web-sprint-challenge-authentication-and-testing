@@ -2,22 +2,26 @@ const router = require("express").Router();
 const db = require("../../data/dbConfig");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const Users = require("../users/users-model");
 
 const SALT = 4;
 
 const SECRET = "billybobthorton";
 
-router.post("/register", async (req, res) => {
-  const payload = req.body;
-  if (
-    payload.hasOwnProperty("username") &&
-    payload.hasOwnProperty("password")
-  ) {
-    // register user
-    try {
-      const hashedPassword = await bcrypt.hash(payload.password, SALT);
+router.post("/register", async (req, res, next) => {
+  const { username, password } = req.body;
+  // register user
+  try {
+    if (!username || !password) {
+      res.status(400).send("username and password required");
+    } else if (username) {
+      const usernameExists = await Users.findBy({ username }).first();
+      if (usernameExists) {
+        return res.status(400).send("username taken");
+      }
+      const hashedPassword = await bcrypt.hash(password, SALT);
       const [newlyCreatedUserId] = await db("users").insert({
-        username: payload.username,
+        username: username,
         password: hashedPassword,
       });
       if (newlyCreatedUserId) {
@@ -25,18 +29,14 @@ router.post("/register", async (req, res) => {
           .where("id", newlyCreatedUserId)
           .first();
         res.json(newUser);
-      } else {
-        return res.status(400).send("username taken");
       }
-    } catch (err) {
-      console.log("err: ", err);
-      return res.status(400).send("username taken");
     }
-  } else {
-    res.status(400).send("username and password required");
+  } catch (err) {
+    next(err);
   }
+});
 
-  /*
+/*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
     DO NOT EXCEED 2^8 ROUNDS OF HASHING!
@@ -61,7 +61,6 @@ router.post("/register", async (req, res) => {
     4- On FAILED registration due to the `username` being taken,
       the response body should include a string exactly as follows: "username taken".
   */
-});
 
 router.post("/login", async (req, res) => {
   const payload = req.body;
