@@ -20,11 +20,15 @@ router.post("/register", async (req, res) => {
         username: payload.username,
         password: hashedPassword,
       });
-      const newUser = await db("users").where("id", newlyCreatedUserId).first();
-      res.json(newUser);
+      if (newlyCreatedUserId) {
+        const newUser = await db("users")
+          .where("id", newlyCreatedUserId)
+          .first();
+        res.json(newUser);
+      }
     } catch (err) {
       console.log("err: ", err);
-      res.status(400).send("username taken");
+      return res.status(400).send("username taken");
     }
   } else {
     res.status(400).send("username and password required");
