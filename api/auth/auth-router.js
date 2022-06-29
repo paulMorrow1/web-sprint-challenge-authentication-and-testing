@@ -64,10 +64,9 @@ router.post("/register", async (req, res, next) => {
 
 router.post("/login", async (req, res) => {
   const payload = req.body;
-  if (
-    payload.hasOwnProperty("username") &&
-    payload.hasOwnProperty("password")
-  ) {
+  if (!payload.username || !payload.password) {
+    res.status(400).send("username and password required");
+  } else if (payload) {
     // get user by username
     const user = await db("users").where("username", payload.username).first();
     // user = { username: '' , password: '' };
@@ -95,8 +94,6 @@ router.post("/login", async (req, res) => {
       // no user found
       res.status(400).send("invalid credentials");
     }
-  } else {
-    res.status(400).send("username and password required");
   }
 
   /*
