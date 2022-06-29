@@ -25,6 +25,8 @@ router.post("/register", async (req, res) => {
           .where("id", newlyCreatedUserId)
           .first();
         res.json(newUser);
+      } else {
+        return res.status(400).send("username taken");
       }
     } catch (err) {
       console.log("err: ", err);
