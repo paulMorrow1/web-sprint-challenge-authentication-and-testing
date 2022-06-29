@@ -65,7 +65,7 @@ router.post("/register", async (req, res, next) => {
 router.post("/login", async (req, res) => {
   const payload = req.body;
   if (!payload.username || !payload.password) {
-    res.status(400).send("username and password required");
+    res.status(400).json({ message: "username and password required" });
   } else if (payload) {
     // get user by username
     const user = await db("users").where("username", payload.username).first();
@@ -88,11 +88,11 @@ router.post("/login", async (req, res) => {
         res.json({ message: `Welcome, ${user.username}`, token: token });
       } else {
         // if no match is found, we don't have the correct users credentials
-        res.status(400).send("invalid credentials");
+        res.status(400).json({ message: "invalid credentials" });
       }
     } else {
       // no user found
-      res.status(400).send("invalid credentials");
+      res.status(400).json({ message: "invalid credentials" });
       //
     }
   }
